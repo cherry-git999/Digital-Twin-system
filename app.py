@@ -52,7 +52,7 @@ st.sidebar.header("🎮 Control Panel")
 beam_type = st.sidebar.selectbox("Beam Type", 
     ["Simply Supported", "Cantilever", "Fixed", "Overhanging"])
 
-length = st.sidebar.slider("Beam Length L (mm)", 500, 2000, 1000)
+length = st.sidebar.slider("Beam Length L (mm)", 400, 2000, 1000)
 
 shape = st.sidebar.selectbox("Cross Section", ["Rectangular", "Circular"])
 
@@ -67,10 +67,8 @@ load_type = st.sidebar.selectbox("Load Type", ["Point Load", "UDL"])
 
 position = st.sidebar.slider("Load Position (mm)", 0, length, int(length/2))
 
-# 🔥 NEW: APPLY BUTTON
 apply_btn = st.sidebar.button("✅ Apply Input")
 
-# 🔥 STORE POSITION ONLY WHEN CLICKED
 if "applied_position" not in st.session_state:
     st.session_state.applied_position = position
 
@@ -108,9 +106,7 @@ strain = 0
 
 if st.session_state.ser is not None:
     try:
-        # 🔥 USE APPLIED VALUE (NOT LIVE SLIDER)
         send_pos = st.session_state.applied_position
-
         st.session_state.ser.write(f"{send_pos}\n".encode())
 
         line = st.session_state.ser.readline().decode(errors='ignore').strip()
@@ -174,7 +170,12 @@ st.subheader("📊 Digital Twin")
 x = np.linspace(0, length, 100)
 
 y_pred = -deflection_pred * (x*(length-x)) / (length**2)
-y_real = y_pred * (deflection_actual / deflection_pred) if deflection_pred != 0 else y_pred
+
+# ✅ FIX ADDED HERE (safe handling)
+if deflection_pred != 0:
+    y_real = y_pred * (deflection_actual / deflection_pred)
+else:
+    y_real = np.zeros_like(y_pred)
 
 fig = go.Figure()
 
